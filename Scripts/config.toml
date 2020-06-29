@@ -1,0 +1,17 @@
+#
+# Configuration file of the picture save/organization/treatment
+#
+
+[Sort]
+
+# Input directory (Dropbox), dir. where the new, non-organized, non-treated pictures are to be sought
+input_dir = "../Dropbox"
+# Output directory for photos organized by YY/MM/
+output_dir = "../Sorted/Large"
+
+[Resize]
+
+# Size (in MegaBytes) of the "small" pictures
+size_small = '1.0'
+# Output directory
+small_dir = "../Sorted/Small"
