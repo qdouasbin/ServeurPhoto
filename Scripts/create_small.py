@@ -24,8 +24,11 @@ def create_small_size_img(filename, size_MB, size_max_MB):
     size_w, size_h = image.size
     factor = np.sqrt(size_MB / size_max_MB)
     new_size = int(size_w / factor), int(size_h / factor)
-    image = image.resize(new_size, Image.ANTIALIAS)
-    return image  # return img
+    try:
+        image = image.resize(new_size, Image.ANTIALIAS)
+    except OSError:
+        print("Cannot process image %s. File is probably damaged!" % filename)
+    return image
 
 
 def copy_small_pictures(copy_dict, out_path, size_max_MB):
@@ -37,26 +40,18 @@ def copy_small_pictures(copy_dict, out_path, size_max_MB):
         full_out_path_small = os.path.join(out_path, subtree, small_file_name)
         size_file = 1e-6 * os.stat(file).st_size
 
-
         # move file to "small" if it is already smaller than the limit
         if size_file <= size_max_MB:
             if not os.path.exists(full_out_path):
                 print("\tMove small picture: %s\t-->\t%s" % (file, full_out_path))
                 os.rename(file, os.path.join(out_path, subtree, filename))
+
         # resize...Do it like a pro!
         else:
             if not os.path.exists(full_out_path_small):
                 print("\t> resize %s" % file)
                 small_img = create_small_size_img(file, size_file, size_max_MB)
                 small_img.save(full_out_path_small)
-
-        # if os.path.isfile(full_out_path):
-        #     print(' > No copy of "%s" to "%s" (already exists)' % (file, os.path.join(out_path, subtree, filename)))
-        # else:
-        #     print(' > Copy "%s" to "%s"' % (file, os.path.join(out_path, subtree, filename)))
-        #     shutil.copyfile(file, os.path.join(small_file_name, subtree, filename))
-        # if remove_file:
-        #     os.remove(file)
 
 
 def main(in_path, out_path, size_max_MB):
@@ -77,15 +72,15 @@ def main(in_path, out_path, size_max_MB):
 
 
 if __name__ == "__main__":
+    # time loop is handled via crontab
     params = toml.load('./config.toml')
     input_path = params['Sort']['output_dir']
     output_path = params['Resize']['small_dir']
     size_small_mb = float(params['Resize']['size_small'])
 
-    while True:
-        print(" > %s --> Resize" % ogpic.get_time())
-        main(input_path, output_path, size_small_mb)
-        print(" > %s --> Wait" % ogpic.get_time())
+    print(" > %s --> Resize" % ogpic.get_time())
+    main(input_path, output_path, size_small_mb)
+    print(" > %s --> Wait" % ogpic.get_time())
 
-        # wait n seconds before starting the loop again
-        time.sleep(1)
+    # wait n seconds before starting the loop again
+    time.sleep(params['Tweaking']['sleep_time'])
