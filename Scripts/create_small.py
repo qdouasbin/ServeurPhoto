@@ -80,7 +80,4 @@ if __name__ == "__main__":
 
     print(" > %s --> Resize" % ogpic.get_time())
     main(input_path, output_path, size_small_mb)
-    print(" > %s --> Wait" % ogpic.get_time())
-
-    # wait n seconds before starting the loop again
-    time.sleep(params['Tweaking']['sleep_time'])
+    print(" > Done.")

@@ -12,6 +12,6 @@ output_dir = "../Sorted/Large"
 [Resize]
 
 # Size (in MegaBytes) of the "small" pictures
-size_small = '1.0'
+size_small = 1.0
 # Output directory
 small_dir = "../Sorted/Small"
