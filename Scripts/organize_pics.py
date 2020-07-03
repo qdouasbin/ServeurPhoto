@@ -46,7 +46,16 @@ def get_date_taken(path):
     :return: string in format'year:month:day hours:min:sec'
     """
     try:
-        return Image.open(path)._getexif()[36867]
+        img = Image.open(path)
+        exif = img.getexif()
+        date_time = exif[36867]
+        device = exif[272]
+
+        # Nikon D3500 had the wrong time until 2020/07/03. Since we had it in 2020, all 2019 should be 2020
+        if device == 'NIKON D3500':
+            date_time = date_time.replace("2019", "2020")
+
+        return date_time
     except:
         return '0000:00'
 
@@ -58,6 +67,7 @@ def collect_time(path_to_pic):
     :return: strings --> year, month
     """
     full_date = get_date_taken(path_to_pic)
+    print("full date: ", full_date )
     date = full_date.split(':')
     year, month = date[0], date[1]
     return year, month
@@ -136,17 +146,30 @@ def clean_empty_directories(src_dir):
         except OSError as ex:
             print(ex)
 
+def check_directories(in_path, out_path):
+    """
+    Create input/output directories if not existing
+    """
+    create_folders(in_path, '')
+    create_folders(out_path, '')
+
+
 def main(in_path, out_path):
     """
     Main routine that calls all the other ones
     :param in_path: path to input folder containing the unsorted pictures
     :param out_path: path to output folder that will contain the sorted pictures
     """
+    print("\t> Check directory")
+    check_directories(in_path, out_path)
+
     print("\t> Find files")
     my_files = get_files(in_path)
 
     print("\t> Get year and months")
     years, months = get_year_month_dicts(my_files)
+    print(years)
+    print(months)
 
     print("\t> Create folder names list")
     folders, copy_dict = format_folder_name(years, months)
@@ -161,12 +184,10 @@ def main(in_path, out_path):
 
 
 if __name__ == "__main__":
+    # TODO: there is a mistake in the years! 2019 instead of 2020! (Only on reflex...)
+
+    # time loop is handled via crontab
     params = toml.load('./config.toml')
-
-    while True:
-        print(" > %s --> Sort" % get_time())
-        main(params['Sort']['input_dir'], params['Sort']['output_dir'])
-        print(" > %s --> Wait" % get_time())
-
-        # wait n seconds before starting the loop again
-        time.sleep(1)
+    print(" > %s --> Sort" % get_time())
+    main(params['Sort']['input_dir'], params['Sort']['output_dir'])
+    print(" > Done." )
