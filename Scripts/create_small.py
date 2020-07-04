@@ -51,15 +51,32 @@ def copy_small_pictures(copy_dict, out_path, size_max_MB):
             if not os.path.exists(full_out_path_small):
                 print("\t> resize %s" % file)
                 small_img = create_small_size_img(file, size_file, size_max_MB)
-                small_img.save(full_out_path_small)
+                try:
+                    small_img.save(full_out_path_small)
+                except OSError:
+                    print(" > Careful, cannot process \t%s" % full_out_path_small)
 
+def get_year_month_from_path(in_path, files):
+    dict_year = {}
+    dict_month = {}
+
+    for my_file in files:
+        # print(my_file)
+        _name = my_file.replace(in_path, "")
+        data = _name.split('/')
+        year, month = data[1], data[2]
+        dict_year[my_file] = year
+        dict_month[my_file] = month
+
+    return dict_year, dict_month
 
 def main(in_path, out_path, size_max_MB):
     print("\t> Find files")
     my_files = ogpic.get_files(in_path)
 
     print("\t> Get year and months")
-    years, months = ogpic.get_year_month_dicts(my_files)
+    # years, months = ogpic.get_year_month_dicts(my_files)
+    years, months = get_year_month_from_path(in_path, my_files)
 
     print("\t> Create folder names list")
     folders, copy_dict = ogpic.format_folder_name(years, months)
