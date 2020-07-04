@@ -27,12 +27,16 @@ def get_files(path_src):
     pic_ext = ['png', 'jpg', 'jpeg']
 
     out = []
+    print("\t\t> Search images in \t %s" % path_src)
     for ext in pic_ext:
-        files = glob.glob("%s/**/*.%s" % (path_src, ext.upper()), recursive=True)
+        print("\t\t> ext: %s" % ext)
+        # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.upper()) ]
+        files = glob.iglob("%s/**/*.%s" % (path_src, ext.upper()), recursive=True)
         for file in files:
             out.append(file)
 
-        files = glob.glob("%s/**/*.%s" % (path_src, ext.lower()), recursive=True)
+        # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.lower()) ]
+        files = glob.iglob("%s/**/*.%s" % (path_src, ext.lower()), recursive=True)
         for file in files:
             out.append(file)
 
@@ -67,7 +71,7 @@ def collect_time(path_to_pic):
     :return: strings --> year, month
     """
     full_date = get_date_taken(path_to_pic)
-    print("full date: ", full_date )
+    # print("full date: ", full_date )
     date = full_date.split(':')
     year, month = date[0], date[1]
     return year, month
@@ -120,10 +124,12 @@ def copy_pictures(copy_dict, out_path, remove_file=False):
         if os.path.isfile(full_out_path):
             print(' > No copy of "%s" to "%s" (already exists)' % (file, os.path.join(out_path, subtree, filename)))
         else:
-            print(' > Copy "%s" to "%s"' % (file, os.path.join(out_path, subtree, filename)))
-            shutil.copyfile(file, os.path.join(out_path, subtree, filename))
-        if remove_file:
-            os.remove(file)
+            if remove_file:
+                print(' > Move "%s" to "%s"' % (file, os.path.join(out_path, subtree, filename)))
+                os.rename(file, os.path.join(out_path, subtree, filename))
+            else:
+                print(' > Copy "%s" to "%s"' % (file, os.path.join(out_path, subtree, filename)))
+                shutil.copyfile(file, os.path.join(out_path, subtree, filename))
 
 
 def get_time():
@@ -145,6 +151,7 @@ def clean_empty_directories(src_dir):
             os.rmdir(dirpath)
         except OSError as ex:
             print(ex)
+
 
 def check_directories(in_path, out_path):
     """
@@ -190,4 +197,4 @@ if __name__ == "__main__":
     params = toml.load('./config.toml')
     print(" > %s --> Sort" % get_time())
     main(params['Sort']['input_dir'], params['Sort']['output_dir'])
-    print(" > Done." )
+    print(" > Done.")
