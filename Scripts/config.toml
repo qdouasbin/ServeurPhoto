@@ -15,3 +15,6 @@ output_dir = "../Sorted/Large"
 size_small = 1.0
 # Output directory
 small_dir = "../Sorted/Small"
+
+[Videos]
+video_dir = "../Sorted/Videos"
