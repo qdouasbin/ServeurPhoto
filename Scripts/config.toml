@@ -6,8 +6,10 @@
 
 # Input directory (Dropbox), dir. where the new, non-organized, non-treated pictures are to be sought
 input_dir = "../Dropbox"
+#input_dir = "../Dropbox_test"
 # Output directory for photos organized by YY/MM/
 output_dir = "../Sorted/Large"
+#output_dir = "../Sorted/Large_test"
 
 [Resize]
 
@@ -15,6 +17,7 @@ output_dir = "../Sorted/Large"
 size_small = 1.0
 # Output directory
 small_dir = "../Sorted/Small"
+#small_dir = "../Sorted/Small_test"
 
 [Videos]
 video_dir = "../Sorted/Videos"

@@ -10,6 +10,7 @@ import os
 import glob
 import shutil
 import time
+from pathlib import Path
 
 from datetime import datetime
 
@@ -24,21 +25,45 @@ def get_files(path_src):
     :param path_src: path to directory containing the unsorted pictures
     :return: list of all corresponding files
     """
+    #
+    # def recursive_find_pic(path_src, ext):
+    #     out = []
+    #     print("\t\t> ext: %s" % ext)
+    #     # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.upper()) ]
+    #     files = glob.iglob("%s/**/*.%s" % (path_src, ext.upper()), recursive=True)
+    #     for file in files:
+    #         out.append(file)
+    #
+    #     # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.lower()) ]
+    #     files = glob.iglob("%s/**/*.%s" % (path_src, ext.lower()), recursive=True)
+    #     for file in files:
+    #         out.append(file)
+    #     return out
+
+    def search_path_lib(path_src, ext):
+        for path in Path(path_src).rglob('*.%s' % ext):
+            print(path)
+            out.append(path)
+
     pic_ext = ['png', 'jpg', 'jpeg']
 
     out = []
     print("\t\t> Search images in \t %s" % path_src)
     for ext in pic_ext:
         print("\t\t> ext: %s" % ext)
+        # search_path_lib(path_src, ext.upper())
         # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.upper()) ]
         files = glob.iglob("%s/**/*.%s" % (path_src, ext.upper()), recursive=True)
         for file in files:
             out.append(file)
 
-        # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.lower()) ]
+        # search_path_lib(path_src, ext.lower())
+    #     # for file in [f for f in os.listdir(path_src) if f.endswith('.%s' % ext.lower()) ]
         files = glob.iglob("%s/**/*.%s" % (path_src, ext.lower()), recursive=True)
         for file in files:
             out.append(file)
+
+    print(" > found %d photos" % len(out))
 
     return out
 
@@ -72,21 +97,22 @@ def collect_time(path_to_pic):
     """
     full_date = get_date_taken(path_to_pic)
     # print("full date: ", full_date )
-    date = full_date.split(':')
+    full_date = full_date.replace(' ', ':').replace(':', '_')
+    date = full_date.split("_")
     year, month = date[0], date[1]
-    return year, month
+    return year, month, full_date
 
 
 def get_year_month_dicts(files):
     """
-    Store time in a dictionary with file path as key
+    Store time in a dictionary with file path as key (3 times should do the trick)
     :param files: list of files
     :return: dictionaries of years and months
     """
-    years, months = {}, {}
+    years, months, full_date = {}, {}, {}
     for file in files:
-        years[file], months[file] = collect_time(file)
-    return years, months
+        years[file], months[file], full_date[file] = collect_time(file)
+    return years, months, full_date
 
 
 def format_folder_name(years, months):
@@ -117,12 +143,24 @@ def create_folders(path, folder_names):
         os.makedirs(name, mode=0o777, exist_ok=True)
 
 
-def copy_pictures(copy_dict, out_path, remove_file=False):
+def copy_pictures(copy_dict, out_path, full_date, remove_file=False):
     for file, subtree in copy_dict.items():
-        filename = file.split('/')[-1]
+        # Avoid creating duplicates
+        print(file)
+        print(full_date[file])
+
+        # file = file.split('/')[-1]
+        if not full_date[file] in file:
+            file = file.replace("%s_" % full_date[file], "")
+            filename = "%s_%s" % (full_date[file], file.split('/')[-1])
+        # keep it as it is
+        else:
+            filename =file.split('/')[-1]
         full_out_path = os.path.join(out_path, subtree, filename)
         if os.path.isfile(full_out_path):
             print(' > No copy of "%s" to "%s" (already exists)' % (file, os.path.join(out_path, subtree, filename)))
+            if remove_file:
+                os.remove(file)
         else:
             if remove_file:
                 print(' > Move "%s" to "%s"' % (file, os.path.join(out_path, subtree, filename)))
@@ -152,6 +190,30 @@ def clean_empty_directories(src_dir):
         except OSError as ex:
             print(ex)
 
+    for my_path in glob.glob(src_dir):
+        removeEmptyFolders(my_path)
+
+
+def removeEmptyFolders(path, removeRoot=True):
+    'Function to remove empty folders'
+    if not os.path.isdir(path):
+        return
+
+    # remove empty subfolders
+    files = os.listdir(path)
+    if len(files):
+        for f in files:
+            fullpath = os.path.join(path, f)
+            if os.path.isdir(fullpath):
+                removeEmptyFolders(fullpath)
+
+    # if folder empty, delete it
+    files = os.listdir(path)
+    if len(files) == 0 and removeRoot:
+        print
+        "Removing empty folder:", path
+        os.rmdir(path)
+
 
 def check_directories(in_path, out_path):
     """
@@ -174,9 +236,10 @@ def main(in_path, out_path):
     my_files = get_files(in_path)
 
     print("\t> Get year and months")
-    years, months = get_year_month_dicts(my_files)
+    years, months, full_date = get_year_month_dicts(my_files)
     print(years)
     print(months)
+    print(full_date)
 
     print("\t> Create folder names list")
     folders, copy_dict = format_folder_name(years, months)
@@ -185,7 +248,7 @@ def main(in_path, out_path):
     create_folders(out_path, folders)
 
     print("\t> Copy and cleanup")
-    copy_pictures(copy_dict, out_path, remove_file=True)
+    copy_pictures(copy_dict, out_path, full_date, remove_file=True)
 
     clean_empty_directories(in_path)
 
