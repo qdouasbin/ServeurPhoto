@@ -25,7 +25,12 @@ def create_small_size_img(filename, size_MB, size_max_MB):
     factor = np.sqrt(size_MB / size_max_MB)
     new_size = int(size_w / factor), int(size_h / factor)
     try:
-        image = image.resize(new_size, Image.ANTIALIAS)
+        try:
+            # version of pillow below 10.0.0
+            image = image.resize(new_size, Image.ANTIALIAS)
+        except AttributeError:
+            # Newer versions of pillow 
+            image = image.resize(new_size, Image.LANCZOS)
     except OSError:
         print("Cannot process image %s. File is probably damaged!" % filename)
     return image

@@ -17,6 +17,7 @@ from datetime import datetime
 import toml
 
 from PIL import Image
+from PIL.ExifTags import TAGS 
 
 
 def get_files(path_src):
@@ -68,25 +69,42 @@ def get_files(path_src):
     return out
 
 
+def get_exif_data(image_path):
+    image = Image.open(image_path)
+    exif_data = image._getexif()
+    if exif_data:
+        for tag, value in exif_data.items():
+            tag_name = TAGS.get(tag, tag)
+            if tag_name == "DateTimeOriginal":
+                value = value.replace(":", "_").replace(" ", "_")
+                print(f"Date and Time: {value}")
+                return value
+
+
 def get_date_taken(path):
     """
     Get time from meta-data
     :param path: path to file
     :return: string in format'year:month:day hours:min:sec'
     """
-    try:
-        img = Image.open(path)
-        exif = img.getexif()
-        date_time = exif[36867]
-        device = exif[272]
+    
+    # Example usage
+    return get_exif_data(path)
 
-        # Nikon D3500 had the wrong time until 2020/07/03. Since we had it in 2020, all 2019 should be 2020
-        if device == 'NIKON D3500':
-            date_time = date_time.replace("2019", "2020")
+    if 0: 
+        try:
+            img = Image.open(path)
+            exif = img.getexif()
+            date_time = exif[36867]
+            device = exif[272]
 
-        return date_time
-    except:
-        return '0000:00'
+            # Nikon D3500 had the wrong time until 2020/07/03. Since we had it in 2020, all 2019 should be 2020
+            if device == 'NIKON D3500':
+                date_time = date_time.replace("2019", "2020")
+
+            return date_time
+        except:
+            return '0000:00'
 
 
 def collect_time(path_to_pic):
